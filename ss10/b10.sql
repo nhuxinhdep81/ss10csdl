@@ -19,34 +19,35 @@ create index idx_name on city(Name);
 delimiter //
 create procedure GetSpecialCountriesAndCities
 (
-	in language_name char(30)
+    in language_name char(30)
 )
 begin
-	select ct.Name as CountryName, c.Name as CityName, c.Population as CityPopulation, ct.population as TotalPopulation
-    from country ct 
-    join city c on ct.Code = c.CountryCode
-    join countrylanguage ctl on ct.Code = ctl.CountryCode
+    select 
+        ct.Name as COuntryName, 
+        c.Name as CityName, 
+        c.Population as CityPopulation, 
+        cp.TotalPopulation
+    from 
+        (select 
+            ct.Code as CountryCode, 
+            sum(c.Population) as TotalPopulation
+        from country ct
+        join city c on ct.Code = c.CountryCode
+        group by ct.Code
+        having TotalPopulation > 5000000
+        ) as cp  
+    join city c on cp.CountryCode = c.CountryCode
+    join countrylanguage ctl on cp.CountryCode = ctl.CountryCode
+    join country ct on cp.CountryCode = ct.Code
     where ctl.Language = language_name
-    and c.Name like 'New%'
-    and ct.population > 5000000
-    order by ct.population desc
+        and c.Name like 'New%'
+    order by cp.TotalPopulation desc, CityPopulation desc
     limit 10;
-
 end //
-delimiter //
+delimiter ;
 
 -- 6
 call GetSpecialCountriesAndCities('English');
 
 
-
-
-
-
-
-
-
-
-
-
-
+drop procedure GetSpecialCountriesAndCities;
